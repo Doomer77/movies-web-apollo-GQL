@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { gql, useQuery } from "@apollo/client";
 import styled from "styled-components";
+import Movie from "../components/Movie";
 
 const GET_MOVIE = gql`
   query getMovie($id: Int!) {
@@ -11,6 +12,11 @@ const GET_MOVIE = gql`
       description_intro
       rating
       language
+      isLiked @client
+    }
+    suggestions(id: $id) {
+      id
+      medium_cover_image
     }
   }
 `;
@@ -51,6 +57,17 @@ const Description = styled.p`
   font-size: 28px;
 `;
 
+const Suggestions = styled.ul`
+  padding: 10px;
+  height: 50px;
+  display: flex;
+`;
+
+const Suggestion = styled.li`
+  width: 20%;
+  height: 40px;
+`;
+
 export default () => {
   const { id } = useParams();
   const { loading, data } = useQuery(GET_MOVIE, {
@@ -59,15 +76,28 @@ export default () => {
     },
   });
   return (
-    <Container>
-      <Column>
-        <Title>{loading ? "Загрузка..." : data?.movie?.title}</Title>
-        <Subtitle>
-          {data?.movie?.language} · {data?.movie?.rating}
-        </Subtitle>
-        <Description>{data?.movie?.description_intro}</Description>
-      </Column>
-      <Poster bg={data?.movie?.medium_cover_image}></Poster>
-    </Container>
+    <>
+      <Container>
+        <Column>
+          <Title>
+            {loading
+              ? "Загрузка..."
+              : `${data?.movie?.title} 
+          ${data?.movie?.isLiked ? "))" : "(("}`}
+          </Title>
+          <Subtitle>
+            {data?.movie?.language} · {data?.movie?.rating}
+          </Subtitle>
+          <Description>{data?.movie?.description_intro}</Description>
+        </Column>
+        <Poster bg={data?.movie?.medium_cover_image}></Poster>
+      </Container>
+      <Title>Рекомендуемое</Title>
+      <Suggestions>
+        {data?.suggestions?.map((s) => {
+          return <Movie key={s.id} id={s.id} bg={s.medium_cover_image} />;
+        })}
+      </Suggestions>
+    </>
   );
 };
